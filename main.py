@@ -25,3 +25,7 @@ headers = {"Authorization": f"Bearer {wc_token}"}
 response = requests.get("https://worldcup26.ir/get/teams", headers=headers)
 
 print(response.json())
+
+## Set up SQL database -- Stores queries from user
+
+## Ask user for team name -> checks if team is playing -> returns Gemini-powered output
