@@ -58,9 +58,16 @@ if live_game:
     model="gemini-2.5-flash",
     contents=(
       f"There is a game currently going on. Here is the match info: {match_info}. "
-      "What is the highest probability of the match result?")
-)
-
+      "What is the highest probability of the match result? "
+      "You are allowed to use external knowledge but focus on the current squad. Don't worry so look so much into storied legacies" \
+      "to improve your decision-making. Include a probability score for each result. Keep it brief.")
+    )
+  print(interaction.text)
 else:
   print(f"{team.title()} is not playing right now")
+
+
+
+
+
 
