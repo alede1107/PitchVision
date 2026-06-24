@@ -63,7 +63,7 @@ LOGO = """
  ╚████╔╝ ██║╚════██║██║██║   ██║██║╚████║
   ╚██╔╝  ██║███████║██║╚██████╔╝██║ ╚███║
    ╚═╝   ╚═╝╚══════╝╚═╝ ╚═════╝╚═╝  ╚══╝
-            World Cup 2026
+World Cup 2026
             """
 
 for line in LOGO.split("\n"):
@@ -106,7 +106,19 @@ while True:
         away_score = live_game.get("away_score")
         time_elapsed = live_game.get("time_elapsed")
 
-        match_info = f"{home} vs {away} | Score: {home_score}-{away_score} | Time: {time_elapsed}"
+        match_stadium = None
+        location = None
+        for stadium in stadiums:
+            if stadium["id"] == live_game["stadium_id"]:
+                match_stadium = stadium["name_en"]
+                stadium_city = stadium["city_en"]
+                stadium_country = stadium["country_en"]
+
+
+
+        match_info = (f"{home} vs {away} | Score: {home_score}-{away_score} | Time: {time_elapsed}"
+                      f"| Stadium: {match_stadium} | City: {stadium_city} | Country: {stadium_country}"
+            )
 
         interaction = client.models.generate_content(
             model="gemini-2.5-flash",
@@ -114,7 +126,8 @@ while True:
             f"There is a game currently going on. Here is the match info: {match_info}. "
             "What is the highest probability of the match result? "
             "You are allowed to use external knowledge but focus on the current squad. Don't worry so look so much into storied legacies" \
-            "to improve your decision-making. Include a probability score for each result. Keep it brief.")
+            "to improve your decision-making. Include a probability score for each result. Keep it brief. Take into account " \
+            "home advantage justly.")
             )
         print(interaction.text)
 
