@@ -34,8 +34,7 @@ team = input("What team are you looking for? ").lower().strip()
 
 print(team)
 
-
-# Fix logic. Need to find a way to not print out "Not Playing" repeatedly
+live_game = None
 
 for game in games:
   home = game.get("home_team_name_en", "").lower()
@@ -43,6 +42,25 @@ for game in games:
 
   if team == home or team == away:
     if game.get("time_elapsed") == "live":
-      print("Playing!") # Stub
-    else:
-      print("Not playing currently") 
+      live_game = game
+      break
+
+if live_game:
+  home = live_game.get("home_team_name_en")
+  away = live_game.get("away_team_name_en")
+  home_score = live_game.get("home_score")
+  away_score = live_game.get("away_score")
+  time_elapsed = live_game.get("time_elapsed")
+
+  match_info = f"{home} vs {away} | Score: {home_score}-{away_score} | Time: {time_elapsed}"
+
+  interaction = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents=(
+      f"There is a game currently going on. Here is the match info: {match_info}. "
+      "What is the highest probability of the match result?")
+)
+
+else:
+  print(f"{team.title()} is not playing right now")
+
