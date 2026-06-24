@@ -19,9 +19,11 @@ headers = {"Authorization": f"Bearer {wc_token}"}
 
 response_games = requests.get("https://worldcup26.ir/get/games", headers=headers)
 response_teams = requests.get("https://worldcup26.ir/get/teams", headers=headers)
+response_stadiums = requests.get("https://worldcup26.ir/get/stadiums", headers=headers)
 
 games = response_games.json()["games"]
 teams = response_teams.json()["teams"]
+stadiums = response_stadiums.json()["stadiums"]
 
 valid_teams = set()
 
@@ -37,7 +39,7 @@ while True:
         print("Thank you so much for trying out our app! :)")
         break
 
-    elif team not in teams:
+    elif team not in valid_teams:
         print(f"{team} is not a World Cup team, check your spelling and try again")
         continue
 
@@ -73,7 +75,7 @@ while True:
             "to improve your decision-making. Include a probability score for each result. Keep it brief.")
             )
         print(interaction.text)
-        
+
     else:
         print(f"{team.title()} is not playing right now")
 
