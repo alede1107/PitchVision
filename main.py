@@ -1,6 +1,7 @@
 import requests
 import os
 import sys
+from datetime import datetime
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -154,43 +155,43 @@ while True:
 
     print(team)
 
-    live_game = None
-
+    today = datetime.now().strftime("%m/%d/%Y")
+    todays_game = None
 
     for game in games:
         home = game.get("home_team_name_en", "").lower()
         away = game.get("away_team_name_en", "").lower()
 
         if team == home or team == away:
-            if game.get("time_elapsed") == "live":
-                live_game = game
+            if game.get("local_date", "").startswith(today):
+                todays_game = game
                 break
 
-    if live_game:
-        home = live_game.get("home_team_name_en")
-        away = live_game.get("away_team_name_en")
-        home_score = live_game.get("home_score")
-        away_score = live_game.get("away_score")
-        time_elapsed = live_game.get("time_elapsed")
+    if todays_game:
+        home = todays_game.get("home_team_name_en")
+        away = todays_game.get("away_team_name_en")
+        home_score = todays_game.get("home_score")
+        away_score = todays_game.get("away_score")
+        status = todays_game.get("time_elapsed")
 
         match_stadium = None
         stadium_city = stadium_country = None
         for stadium in stadiums:
-            if stadium["id"] == live_game["stadium_id"]:
+            if stadium["id"] == todays_game["stadium_id"]:
                 match_stadium = stadium["name_en"]
                 stadium_city = stadium["city_en"]
                 stadium_country = stadium["country_en"]
 
-        match_info = (f"{home} vs {away} | Score: {home_score}-{away_score} | Time: {time_elapsed}"
+        match_info = (f"{home} vs {away} | Score: {home_score}-{away_score} | Status: {status}"
                       f"| Stadium: {match_stadium} | City: {stadium_city} | Country: {stadium_country}")
 
         analyze_match(home, away, match_info)
 
     else:
-        # No live game (e.g. during the lecture) -> run a mock match so the demo still works.
-        print(f"{team.title()} is not playing right now - running a demo match instead.")
+        # No match today -> run a mock match so the demo still works.
+        print(f"{team.title()} has no match today - running a demo match instead.")
         opponent = input("Who are they playing? ").strip().title()
-        analyze_match(team.title(), opponent, f"{team.title()} vs {opponent} (demo match, no live game)")
+        analyze_match(team.title(), opponent, f"{team.title()} vs {opponent} (demo match)")
 
 
 
