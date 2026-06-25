@@ -1,8 +1,13 @@
 import requests
 import os
+import sys
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+
+import db
+import mock_data
+from predict import predictScore
 
 ## Setting up Gemini API
 load_dotenv()
@@ -66,11 +71,52 @@ LOGO = """
 World Cup 2026
             """
 
+# Make sure the Unicode logo prints on Windows consoles (cp1252 would crash).
+sys.stdout.reconfigure(encoding="utf-8")
+
 for line in LOGO.split("\n"):
     print(line.center(80))
 
 for team in teams:
     valid_teams.add(team["name_en"].lower())
+
+def analyze_match(home, away, match_info):
+    # Stats fall back on mock data, so this still works with no live game.
+    home_goals = predictScore(mock_data.mockStrength(home), [])
+    away_goals = predictScore(mock_data.mockStrength(away), [])
+    scoreline = f"{home} {home_goals}-{away_goals} {away}"
+
+    # Human intelligence the official API is missing, remembered per match.
+    facts = db.get_facts(home, away)
+    fact_lines = [f"{category}: {text}" for category, text, created in facts]
+
+    try:
+        interaction = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=(
+                f"Match info: {match_info}. "
+                f"Our model predicts {scoreline}. "
+                f"User-submitted facts the official data is missing: {fact_lines}. "
+                "Give the most likely result with a probability for each outcome. "
+                "Use the user facts to adjust your analysis. Focus on the current squad, "
+                "not storied legacies. Account for home advantage justly. Keep it brief."
+            ),
+        )
+        report = interaction.text
+    except Exception as error:
+        report = f"(AI analysis unavailable right now: {error})"
+
+    print(f"\nModel prediction: {scoreline}")
+    print(report)
+    db.save_report(home, away, scoreline, report)
+
+    # Let the user add intel that will be remembered next time.
+    note = input("\nAdd match intel? (press Enter to skip): ").strip()
+    if note:
+        category = input("Category (Injury/Suspension/Weather/Morale/Manager): ").strip().title()
+        db.add_fact(home, away, category, note)
+        print("Saved - it will be remembered next time you analyze this match.")
+
 
 ## Ask user for team name -> checks if team is playing -> returns Gemini-powered output
 while True:
@@ -107,32 +153,23 @@ while True:
         time_elapsed = live_game.get("time_elapsed")
 
         match_stadium = None
-        location = None
+        stadium_city = stadium_country = None
         for stadium in stadiums:
             if stadium["id"] == live_game["stadium_id"]:
                 match_stadium = stadium["name_en"]
                 stadium_city = stadium["city_en"]
                 stadium_country = stadium["country_en"]
 
-
-
         match_info = (f"{home} vs {away} | Score: {home_score}-{away_score} | Time: {time_elapsed}"
-                      f"| Stadium: {match_stadium} | City: {stadium_city} | Country: {stadium_country}"
-            )
+                      f"| Stadium: {match_stadium} | City: {stadium_city} | Country: {stadium_country}")
 
-        interaction = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=(
-            f"There is a game currently going on. Here is the match info: {match_info}. "
-            "What is the highest probability of the match result? "
-            "You are allowed to use external knowledge but focus on the current squad. Don't worry so look so much into storied legacies" \
-            "to improve your decision-making. Include a probability score for each result. Keep it brief. Take into account " \
-            "home advantage justly.")
-            )
-        print(interaction.text)
+        analyze_match(home, away, match_info)
 
     else:
-        print(f"{team.title()} is not playing right now")
+        # No live game (e.g. during the lecture) -> run a mock match so the demo still works.
+        print(f"{team.title()} is not playing right now - running a demo match instead.")
+        opponent = input("Who are they playing? ").strip().title()
+        analyze_match(team.title(), opponent, f"{team.title()} vs {opponent} (demo match, no live game)")
 
 
 
