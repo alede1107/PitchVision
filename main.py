@@ -40,13 +40,15 @@ def get_team_info(team):
     except Exception:
         return ""
 
-response_games = requests.get("https://worldcup26.ir/get/games", headers=headers)
-response_teams = requests.get("https://worldcup26.ir/get/teams", headers=headers)
-response_stadiums = requests.get("https://worldcup26.ir/get/stadiums", headers=headers)
-
-games = response_games.json()["games"]
-teams = response_teams.json()["teams"]
-stadiums = response_stadiums.json()["stadiums"]
+# If the World Cup API is unreachable, fall back to offline demo mode
+# instead of crashing on startup.
+try:
+    games = requests.get("https://worldcup26.ir/get/games", headers=headers, timeout=15).json()["games"]
+    teams = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=15).json()["teams"]
+    stadiums = requests.get("https://worldcup26.ir/get/stadiums", headers=headers, timeout=15).json()["stadiums"]
+except Exception:
+    print("Could not reach the World Cup API - running in offline demo mode.")
+    games, teams, stadiums = [], [], []
 
 valid_teams = set()
 
@@ -97,6 +99,10 @@ for line in LOGO.split("\n"):
 
 for team in teams:
     valid_teams.add(team["name_en"].lower())
+
+# Offline fallback: if the API gave us no teams, accept the mock-data teams.
+if not valid_teams:
+    valid_teams = {name.lower() for name in mock_data.MOCK_STATS}
 
 def analyze_match(home, away, match_info):
     # Stats fall back on mock data, so this still works with no live game.
