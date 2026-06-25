@@ -22,6 +22,23 @@ client = genai.Client(api_key=api_key)
 wc_token = os.environ["WC_TOKEN"]
 headers = {"Authorization": f"Bearer {wc_token}"}
 
+## Setting up API-Football (an API that uses authorization via a key)
+football_headers = {"x-apisports-key": os.environ["FOOTBALL_KEY"]}
+
+
+def get_team_info(team):
+    try:
+        response = requests.get(
+            "https://v3.football.api-sports.io/teams",
+            headers=football_headers,
+            params={"search": team},
+            timeout=20,
+        )
+        info = response.json()["response"][0]["team"]
+        return f"{info['name']} (founded {info['founded']}, {info['country']})"
+    except Exception:
+        return ""
+
 response_games = requests.get("https://worldcup26.ir/get/games", headers=headers)
 response_teams = requests.get("https://worldcup26.ir/get/teams", headers=headers)
 response_stadiums = requests.get("https://worldcup26.ir/get/stadiums", headers=headers)
@@ -90,11 +107,15 @@ def analyze_match(home, away, match_info):
     facts = db.get_facts(home, away)
     fact_lines = [f"{category}: {text}" for category, text, created in facts]
 
+    # Background on each team from API-Football (authorized API).
+    team_background = f"{get_team_info(home)}; {get_team_info(away)}"
+
     try:
         interaction = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=(
                 f"Match info: {match_info}. "
+                f"Team background: {team_background}. "
                 f"Our model predicts {scoreline}. "
                 f"User-submitted facts the official data is missing: {fact_lines}. "
                 "Give the most likely result with a probability for each outcome. "
