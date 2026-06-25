@@ -9,7 +9,7 @@ def fresh_db():
     # Use an in-memory database so tests never touch pitchvision.db.
     db.connection = sqlite3.connect(":memory:")
     db.connection.execute(
-        "CREATE TABLE facts (id INTEGER PRIMARY KEY, home TEXT, away TEXT, category TEXT, text TEXT, created TEXT)"
+        "CREATE TABLE facts (id INTEGER PRIMARY KEY, home TEXT, away TEXT, team TEXT, category TEXT, text TEXT, created TEXT)"
     )
     db.connection.execute(
         "CREATE TABLE reports (id INTEGER PRIMARY KEY, home TEXT, away TEXT, scoreline TEXT, body TEXT, created TEXT)"
@@ -19,11 +19,12 @@ def fresh_db():
 
 def test_add_fact():
     fresh_db()
-    db.add_fact("Spain", "Brazil", "Injury", "Striker injured")
+    db.add_fact("Spain", "Brazil", "Spain", "Injury", "Striker injured")
     facts = db.get_facts("Spain", "Brazil")
     assert len(facts) == 1
-    assert facts[0][0] == "Injury"
-    assert facts[0][1] == "Striker injured"
+    assert facts[0][0] == "Spain"       # team the fact is about
+    assert facts[0][1] == "Injury"      # category
+    assert facts[0][2] == "Striker injured"
 
 
 def test_save_report():

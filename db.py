@@ -2,10 +2,10 @@ import sqlite3
 
 connection = sqlite3.connect("pitchvision.db")
 
-# Facts are stored per match (home + away) with a timestamp, so the app
-# remembers context like an injury from earlier across repeated queries.
+# Facts are stored per match (home + away), tagged with which team they are
+# about, plus a timestamp - so the app remembers context across queries.
 connection.execute(
-    "CREATE TABLE IF NOT EXISTS facts (id INTEGER PRIMARY KEY, home TEXT, away TEXT, category TEXT, text TEXT, created TEXT)"
+    "CREATE TABLE IF NOT EXISTS facts (id INTEGER PRIMARY KEY, home TEXT, away TEXT, team TEXT, category TEXT, text TEXT, created TEXT)"
 )
 connection.execute(
     "CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY, home TEXT, away TEXT, scoreline TEXT, body TEXT, created TEXT)"
@@ -13,17 +13,17 @@ connection.execute(
 connection.commit()
 
 
-def add_fact(home, away, category, text):
+def add_fact(home, away, team, category, text):
     connection.execute(
-        "INSERT INTO facts (home, away, category, text, created) VALUES (?, ?, ?, ?, datetime('now'))",
-        (home, away, category, text),
+        "INSERT INTO facts (home, away, team, category, text, created) VALUES (?, ?, ?, ?, ?, datetime('now'))",
+        (home, away, team, category, text),
     )
     connection.commit()
 
 
 def get_facts(home, away):
     return connection.execute(
-        "SELECT category, text, created FROM facts WHERE home = ? AND away = ? ORDER BY id",
+        "SELECT team, category, text, created FROM facts WHERE home = ? AND away = ? ORDER BY id",
         (home, away),
     ).fetchall()
 

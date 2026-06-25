@@ -106,7 +106,7 @@ def analyze_match(home, away, match_info):
 
     # Human intelligence the official API is missing, remembered per match.
     facts = db.get_facts(home, away)
-    fact_lines = [f"{category}: {text}" for category, text, created in facts]
+    fact_lines = [f"{team} - {category}: {text}" for team, category, text, created in facts]
 
     # Background on each team from API-Football (authorized API).
     team_background = f"{get_team_info(home)}; {get_team_info(away)}"
@@ -135,8 +135,9 @@ def analyze_match(home, away, match_info):
     # Let the user add intel that will be remembered next time.
     note = input("\nAdd match intel? (press Enter to skip): ").strip()
     if note:
+        which = input(f"Which team is this about? ({home}/{away}): ").strip().title()
         category = input("Category (Injury/Suspension/Weather/Morale/Manager): ").strip().title()
-        db.add_fact(home, away, category, note)
+        db.add_fact(home, away, which, category, note)
         print("Saved - it will be remembered next time you analyze this match.")
 
 
