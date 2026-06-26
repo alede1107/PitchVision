@@ -134,7 +134,7 @@ def analyze_match(home, away, match_info):
                 "Use the user facts to adjust your analysis. Focus on the current squad, "
                 "not storied legacies. Account for home advantage justly. Keep it brief. " \
                 "Focus on making it pleasant to look at for a cli interface. No emojis." \
-                "Give a short description as to why"
+                "Provide predicted scorelines with probability next to it. Give a short description as to why."
             ),
         )
         report = interaction.text
