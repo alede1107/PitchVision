@@ -133,15 +133,16 @@ def analyze_match(home, away, match_info):
                 "Give the most likely result with a probability for each outcome. "
                 "Use the user facts to adjust your analysis. Focus on the current squad, "
                 "not storied legacies. Account for home advantage justly. Keep it brief. " \
-                "Focus on making it pleasant to look at for a cli interface. No emojis."
+                "Focus on making it pleasant to look at for a cli interface. No emojis." \
+                "Give a short description as to why"
             ),
         )
         report = interaction.text
     except Exception as error:
         report = f"(AI analysis unavailable right now: {error})"
 
-    ## Model prediction is not shown to users but it is used to inform the model
-    # print(f"\nModel prediction: {scoreline}")
+    
+    print(f"\nModel prediction: {scoreline}")
 
     print(report)
     db.save_report(home, away, scoreline, report)
