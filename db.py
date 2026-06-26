@@ -10,6 +10,9 @@ connection.execute(
 connection.execute(
     "CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY, home TEXT, away TEXT, scoreline TEXT, body TEXT, created TEXT)"
 )
+
+connection.execute("DELETE FROM facts")
+connection.execute("DELETE FROM reports")
 connection.commit()
 
 

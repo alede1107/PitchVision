@@ -1,3 +1,5 @@
+import random
+
 MULTIPLIERS = {
     "Suspension": 0.85,
     "Injury": 0.88,
@@ -10,4 +12,5 @@ MULTIPLIERS = {
 def predictScore(strength, factors):
     for factor in factors:
         strength *= MULTIPLIERS.get(factor, 1)
+    strength += random.uniform(-0.5, 0.5)
     return max(0, min(4, round(strength)))

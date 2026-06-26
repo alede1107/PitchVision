@@ -5,6 +5,7 @@ from datetime import datetime
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from functools import lru_cache
 
 import db
 import mock_data
@@ -26,7 +27,7 @@ headers = {"Authorization": f"Bearer {wc_token}"}
 ## Setting up API-Football (an API that uses authorization via a key)
 football_headers = {"x-apisports-key": os.environ["FOOTBALL_KEY"]}
 
-
+@lru_cache
 def get_team_info(team):
     try:
         response = requests.get(
@@ -105,13 +106,17 @@ if not valid_teams:
     valid_teams = {name.lower() for name in mock_data.MOCK_STATS}
 
 def analyze_match(home, away, match_info):
+    facts = db.get_facts(home, away)
     # Stats fall back on mock data, so this still works with no live game.
-    home_goals = predictScore(mock_data.mockStrength(home), [])
-    away_goals = predictScore(mock_data.mockStrength(away), [])
+    home_factors = [category for team, category, text, created in facts if team == home]
+    away_factors = [category for team, category, text, created in facts if team == away]
+
+    home_goals = predictScore(mock_data.mockStrength(home), home_factors)
+    away_goals = predictScore(mock_data.mockStrength(away), away_factors)
+
     scoreline = f"{home} {home_goals}-{away_goals} {away}"
 
     # Human intelligence the official API is missing, remembered per match.
-    facts = db.get_facts(home, away)
     fact_lines = [f"{team} - {category}: {text}" for team, category, text, created in facts]
 
     # Background on each team from API-Football (authorized API).
@@ -127,14 +132,17 @@ def analyze_match(home, away, match_info):
                 f"User-submitted facts the official data is missing: {fact_lines}. "
                 "Give the most likely result with a probability for each outcome. "
                 "Use the user facts to adjust your analysis. Focus on the current squad, "
-                "not storied legacies. Account for home advantage justly. Keep it brief."
+                "not storied legacies. Account for home advantage justly. Keep it brief. " \
+                "Focus on making it pleasant to look at for a cli interface. No emojis."
             ),
         )
         report = interaction.text
     except Exception as error:
         report = f"(AI analysis unavailable right now: {error})"
 
-    print(f"\nModel prediction: {scoreline}")
+    ## Model prediction is not shown to users but it is used to inform the model
+    # print(f"\nModel prediction: {scoreline}")
+
     print(report)
     db.save_report(home, away, scoreline, report)
 
@@ -199,9 +207,3 @@ while True:
         print(f"{team.title()} has no match today - running a demo match instead.")
         opponent = input("Who are they playing? ").strip().title()
         analyze_match(team.title(), opponent, f"{team.title()} vs {opponent} (demo match)")
-
-
-
-
-
-
